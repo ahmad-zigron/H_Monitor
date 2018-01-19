@@ -1,0 +1,52 @@
+# #
+#
+#   ___            _ _     _
+#  / _ \          (_) |   | |
+# / /_\ \_ __  ___ _| |__ | | ___
+# |  _  | '_ \/ __| | '_ \| |/ _ \
+# | | | | | | \__ \ | |_) | |  __/
+# \_| |_/_| |_|___/_|_.__/|_|\___|
+#
+#
+
+#  Ansible playbook to install health monitor cron job on centos 7 servers. This is run
+#  on host machine running docker daemon so it can easily manage the pdns docker
+#
+#  Owner: Hammad Shah
+#  2017
+#
+#
+
+- name: Playbook to setup health monitor
+  hosts: staging
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install prereqs
+      yum:
+        name: gcc-c++, libcurl, libcurl-devel, libconfig, libconfig-devel
+        state: present
+        update_cache: yes
+    - tags:
+	- build
+    - name: remove old HM code from servers
+      command: rm -rf /opt/pdns_hm/*
+    - tags:
+	- build
+    - name: Copy latest HM code to servers
+      copy:
+        src: ../docker/pdns_hm/
+        dest: /opt/pdns_hm/
+        owner: root
+        group: root
+    - tags:
+	- build
+    - name: compile health monitor
+      command: make -C /opt/pdns_hm
+    - tags:
+	- build
+    - name: install health monitor
+      command: make install -C /opt/pdns_hm
+      tags:
+	- deploy
+- include: cronjob.yml

@@ -1,0 +1,33 @@
+# #
+#
+#   ___            _ _     _
+#  / _ \          (_) |   | |
+# / /_\ \_ __  ___ _| |__ | | ___
+# |  _  | '_ \/ __| | '_ \| |/ _ \
+# | | | | | | \__ \ | |_) | |  __/
+# \_| |_/_| |_|___/_|_.__/|_|\___|
+#
+#
+
+#  Ansible playbook to configure a cron job for health monitor on host server. We change
+#  the health monitor execution model from inside the container to outside on host machine.
+#
+#  Owner: Hammad Shah
+#  2017
+#
+#
+- name: Configure health monitor cron job on host machine
+  hosts: staging
+  become: true
+  tasks:
+    - name: Copy modified crontab file
+      copy:
+        src: ../docker/crontab
+        dest: /etc/crontab
+        owner: root
+        group: root
+        mode: u=rw,g=rw,o=r
+    - name: set file permissions for copied crontab
+      command: chmod 644 /etc/crontab
+    - name: run cron service
+      command: service crond restart
